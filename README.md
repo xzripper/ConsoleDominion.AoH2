@@ -6,7 +6,7 @@ Age of History 2 light modification that extends existing console commands, allo
 - `setowner [COUNTRY_ID/"me"]` - Set province's owner; click on province before running the command.
 - `addmoney [NUMBER]` - Adds gold to the treasury; click on province (country) before running the command.
 - `ideology [IDEOLOGY]` - Changes country ideology; click on province (country) before running the command.
-  - Supported ideologies: `democracy`, `monarchy`, `communism`, `fascism`, `horde`, `citystate`.
+  - Supported ideologies: `democracy`, `monarchy`, `communism`, `fascism`, `republic`, `horde`, `citystate`.
   - Known glitches: Sometimes text placed incorrectly (remove one character in country's name and type it back to fix it); Colors are different from original game's ideology colors (not that serious?)
 - `removeplayer [First/Last]` - Remove previously added player. Use "first" (case ignorant) to remove player from start; use "last" to remove player from the end of the list.
 - `revolt [COUNTRY_TAG]` - Create a revolt in a country; click on province before running the command.
