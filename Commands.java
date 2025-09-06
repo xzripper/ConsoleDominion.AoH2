@@ -559,6 +559,7 @@ class Commands {
                     return;
                 }
 
+                // Mod starts here !
                 if (tempCommand[0].equals("setowner")) {
                     String civ = tempCommand[1];
 
@@ -603,7 +604,7 @@ class Commands {
                         addMessage("Expected numbers!");
                         addMessage("");
 
-                        	CFG.toast.setInView("Expected numbers!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+                        CFG.toast.setInView("Expected numbers!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
 
                         return;
                     }
@@ -651,7 +652,7 @@ class Commands {
                         Commands.addMessage("Invalid ideology!");
                         Commands.addMessage("");
 
-                        	CFG.toast.setInView("Invalid ideology1", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+                        CFG.toast.setInView("Invalid ideology!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
 
                         return;
                     }
@@ -728,7 +729,7 @@ class Commands {
                                 addMessage("Removed the first player!");
                                 addMessage("");
 
-						                    return;
+                                return;
                             } catch(java.lang.NoSuchFieldException | java.lang.IllegalAccessException r) {
                                 addMessage("Reflection error.");
                                 addMessage("");
@@ -757,7 +758,7 @@ class Commands {
 
                     // maybe later
                 	if (tempCommand[0].equals("revolt")) {
-                                        		//addMessage("In testing");
+                        //addMessage("In testing");
                 		//addMessage("");
                 		String countryID = tempCommand[1];
 
