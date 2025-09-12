@@ -11,8 +11,8 @@ Age of History 2 light modification that extends existing console commands, allo
 - `removeplayer [PlayerPosition]` - Remove previously added player.
 - `revolt [COUNTRY_TAG]` - Create a revolt in a country; click on theprovince before running the command.
   - How to get country tag? E.g if you want to make a revolt in France, always take first three characters from country's name (e.g `France` -> `fra`) and add a first letter of ideology after an underscore (E.g `Fascism` -> `_f`). So if you want to make a fascist revolt in France, use this country tag: `fra_f`. Other examples: `Fascist Italy` -> `ita_f`, `Monarchist Germany` -> `ger_m`, `Communist Poland` -> `pol_c`, ETC! Use `province` on any country province to get the country tag if you can't compile a country's tag.
-  - `intervene [Against]` - Help a country with their war against another country. Click on the province of the country you want to help, and `Against` argument is the country ID you want to fight against (use `id` to get the country ID).
-  - `switchplayer` - Switch to another country. Click on the province of the country you want to switch to.
+- `intervene [Against]` - Help a country with their war against another country. Click on the province of the country you want to help, and `Against` argument is the country ID you want to fight against (use `id` to get the country ID).
+- `switchplayer` - Switch to another country. Click on the province of the country you want to switch to.
 - More coming in future!
 
 Make sure to visit the Steam Page for illustrations and more information!
