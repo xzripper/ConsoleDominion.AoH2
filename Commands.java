@@ -560,6 +560,7 @@ class Commands {
                 }
 
                 // Mod starts here!
+				// Messed up tabulation in some places and spaghetti code; following the original game coding style
                 if (tempCommand[0].equals("setowner")) {
                     String civ = tempCommand[1];
 
@@ -597,7 +598,7 @@ class Commands {
                 if (tempCommand[0].equals("addmoney")) {
                     long moneyToAdd;
 
-			    	// Why not
+			    	// XD
                     try {
                         moneyToAdd = Long.parseLong(tempCommand[1]);
                     } catch (NumberFormatException nfe) {
@@ -706,14 +707,14 @@ class Commands {
                 }
 
                 if (!CFG.SPECTATOR_MODE && tempCommand[0].equals("removeplayer")) {
-                		if (CFG.game.getPlayersSize() > 1) {
-                			String player = tempCommand[1];
+                    if (CFG.game.getPlayersSize() > 1) {
+                        String player = tempCommand[1];
 
                         int playerID;
 
-                        // Can't be worse
+                        // XD
                         try {
-                        	    playerID = Integer.parseInt(player);
+                            playerID = Integer.parseInt(player);
                         } catch(NumberFormatException nfe) {
                             addMessage("Expected player ID (number)!");
                             addMessage("");
@@ -724,8 +725,8 @@ class Commands {
                         }
 
                         if(playerID > CFG.game.getPlayersSize() || playerID < 1) {
-                        	    addMessage("Invalid player ID!");
-                        	    addMessage("");
+                            addMessage("Invalid player ID!");
+                            addMessage("");
 
                             CFG.toast.setInView("Invalid player ID!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
 
@@ -735,16 +736,16 @@ class Commands {
                         playerID -= 1;
 
                         if(CFG.PLAYER_TURNID == playerID) {
-                			    addMessage("Can't remove the playing player! Skip the turn!");
-                			    addMessage("");
+                            addMessage("Can't remove the playing player! Skip the turn!");
+                            addMessage("");
 
                             CFG.toast.setInView("Can't remove the playing player! Skip the turn!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
 
-                			    return;
-                			}
+                            return;
+                            }
 
                         if(playerID == 0) {
-					                // Don't try this at home!
+                            // Don't try this at home!
                             try {
                                 java.lang.reflect.Field playersField = CFG.game.getClass().getDeclaredField("lPlayers");
 
@@ -771,27 +772,27 @@ class Commands {
                                 addMessage("Reflection error.");
                                 addMessage("");
 
-	                            return;
+                                return;
                             }
                         } else {
-                			    CFG.game.removePlayer(playerID);
+                                CFG.game.removePlayer(playerID);
 
-                			    addMessage(String.format("Removed the %dth player!", playerID+1));
-                			    addMessage("");
+                                addMessage(String.format("Removed the %dth player!", playerID+1));
+                                addMessage("");
 
-                			    CFG.toast.setInView(String.format("Removed the %dth player!", playerID+1), CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+                                CFG.toast.setInView(String.format("Removed the %dth player!", playerID+1), CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
 
-		                    return;
+                            return;
                         }
-                		} else {
-                			addMessage("Can't remove the only one player!");
-                			addMessage("");
+                    } else {
+                        addMessage("Can't remove the only one player!");
+                        addMessage("");
 
-                			CFG.toast.setInView("Can't remove the only one player!", CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+                        CFG.toast.setInView("Can't remove the only one player!", CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
 
-                			return;
-                		}
-                	}
+                        return;
+                    }
+                }
 
                 if (tempCommand[0].equals("revolt")) {
                     String countryID = tempCommand[1];
@@ -1031,3 +1032,4 @@ class Commands {
         Commands.addMessage("");
     }
 }
+
