@@ -559,7 +559,7 @@ class Commands {
                     return;
                 }
 
-                // Mod starts here !
+                // Mod starts here!
                 if (tempCommand[0].equals("setowner")) {
                     String civ = tempCommand[1];
 
@@ -576,12 +576,12 @@ class Commands {
                         CFG.game.setActiveProvinceID(-1);
                         CFG.game.setActiveProvinceID(tActiveProvince);
 
-                        String message = String.format("%s now owns province of %s.", CFG.game.getCiv(civID).getCivName(), CFG.game.getProvince(CFG.game.getActiveProvinceID()).getName());
+                        String message = String.format("%s now owns the province of %s.", CFG.game.getCiv(civID).getCivName(), CFG.game.getProvince(CFG.game.getActiveProvinceID()).getName());
 
                         addMessage(message);
                         addMessage("");
 
-                        CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_POSITIVE);
+                        CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
 
                         return;
                     }
@@ -597,7 +597,7 @@ class Commands {
                 if (tempCommand[0].equals("addmoney")) {
                     long moneyToAdd;
 
-					// Why not
+			    	// Why not
                     try {
                         moneyToAdd = Long.parseLong(tempCommand[1]);
                     } catch (NumberFormatException nfe) {
@@ -609,7 +609,12 @@ class Commands {
                         return;
                     }
 
-                    CFG.game.getCiv(CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID()).setMoney(CFG.game.getCiv(CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID()).getMoney() + moneyToAdd);
+                    CFG.game.getCiv(
+                        CFG.game.getActiveProvinceID() < 0 ||
+                        CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID() <= 0 
+                        ? CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID() :
+                        CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID())
+                            .setMoney(CFG.game.getCiv(CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID()).getMoney() + moneyToAdd);
 
                     addMessage("Money enrolled!");
                     addMessage("");
@@ -649,8 +654,8 @@ class Commands {
                     }
 
                     if (ideology == -1) {
-                        Commands.addMessage("Invalid ideology!");
-                        Commands.addMessage("");
+                        addMessage("Invalid ideology!");
+                        addMessage("");
 
                         CFG.toast.setInView("Invalid ideology!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
 
@@ -689,27 +694,57 @@ class Commands {
 
                     String message = String.format("%s has %s now!", CFG.game.getCiv(civID).getCivName(), ideologyInputString);
 
-                    Commands.addMessage(message);
-                    Commands.addMessage("");
+                    addMessage(message);
+                    addMessage("");
 
                     CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
 
-                    Commands.addMessage("Warning: possible minor glitches with colors/text;");
-                    Commands.addMessage("");
+                    addMessage("Warning: possible minor glitches with colors/text;");
+                    addMessage("");
 
                     return;
                 }
 
                 if (!CFG.SPECTATOR_MODE && tempCommand[0].equals("removeplayer")) {
                 		if (CFG.game.getPlayersSize() > 1) {
-                			String order = tempCommand[1];
+                			String player = tempCommand[1];
 
-                        if(order.equalsIgnoreCase("first")) {
-                            if(CFG.PLAYER_TURNID == 0) { 
-                                CFG.PLAYER_TURNID = CFG.game.getPlayersSize() - 1;
-                            }
+                        int playerID;
 
-					        // Don't try this at home!
+                        // Can't be worse
+                        try {
+                        	    playerID = Integer.parseInt(player);
+                        } catch(NumberFormatException nfe) {
+                            addMessage("Expected player ID (number)!");
+                            addMessage("");
+
+                            CFG.toast.setInView("Expected player ID (number)!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                            return;
+                        }
+
+                        if(playerID > CFG.game.getPlayersSize() || playerID < 1) {
+                        	    addMessage("Invalid player ID!");
+                        	    addMessage("");
+
+                            CFG.toast.setInView("Invalid player ID!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                            return;
+                        }
+
+                        playerID -= 1;
+
+                        if(CFG.PLAYER_TURNID == playerID) {
+                			    addMessage("Can't remove the playing player! Skip the turn!");
+                			    addMessage("");
+
+                            CFG.toast.setInView("Can't remove the playing player! Skip the turn!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                			    return;
+                			}
+
+                        if(playerID == 0) {
+					                // Don't try this at home!
                             try {
                                 java.lang.reflect.Field playersField = CFG.game.getClass().getDeclaredField("lPlayers");
 
@@ -729,6 +764,8 @@ class Commands {
                                 addMessage("Removed the first player!");
                                 addMessage("");
 
+                                CFG.toast.setInView("Removed the first player!", CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+
                                 return;
                             } catch(java.lang.NoSuchFieldException | java.lang.IllegalAccessException r) {
                                 addMessage("Reflection error.");
@@ -737,14 +774,12 @@ class Commands {
 	                            return;
                             }
                         } else {
-                			    int last = CFG.game.getPlayersSize() - 1;
+                			    CFG.game.removePlayer(playerID);
 
-                			    if(CFG.PLAYER_TURNID == last) { addMessage("Can't remove the playing player! Skip the turn!"); addMessage(""); return; }
-
-                			    CFG.game.removePlayer(last);
-
-                			    addMessage("Removed the last player!");
+                			    addMessage(String.format("Removed the %dth player!", playerID+1));
                 			    addMessage("");
+
+                			    CFG.toast.setInView(String.format("Removed the %dth player!", playerID+1), CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
 
 		                    return;
                         }
@@ -752,67 +787,206 @@ class Commands {
                 			addMessage("Can't remove the only one player!");
                 			addMessage("");
 
+                			CFG.toast.setInView("Can't remove the only one player!", CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+
                 			return;
                 		}
                 	}
 
-                    // maybe later
-                	if (tempCommand[0].equals("revolt")) {
-                        //addMessage("In testing");
-                		//addMessage("");
-                		String countryID = tempCommand[1];
+                if (tempCommand[0].equals("revolt")) {
+                    String countryID = tempCommand[1];
 
-                    if (CFG.game.getActiveProvinceID() < 0) {
+                    int activeProvinceID = CFG.game.getActiveProvinceID();
+
+                    if (activeProvinceID < 0) {
                         Commands.addMessage("Click on country's province");
                         Commands.addMessage("");
+
+                        CFG.toast.setInView("Click on country's province!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
                         return;
                     }
 
-Province province = CFG.game.getProvince(CFG.game.getActiveProvinceID());
+                    Province province = CFG.game.getProvince(activeProvinceID);
 
-String prevOwnerName = CFG.game.getCiv(province.getCivID()).getCivName();
+                    String prevOwnerName = CFG.game.getCiv(province.getCivID()).getCivName();
 
-int prevCivID = province.getCivID();
+                    int prevCivID = province.getCivID();
 
-if (prevCivID <= 0) {
-    addMessage("Invalid province for revolt.");
-    addMessage("");
-    return;
-}
+                    if (prevCivID <= 0) {
+                        addMessage("Invalid province for revolt.");
+                        addMessage("");
 
-CFG.game.createScenarioAddCivilization(countryID, CFG.game.getActiveProvinceID(), false, true, true);
+                        CFG.toast.setInView("Invalid province for revolt.", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
 
-CFG.game.getCiv(CFG.game.getActiveProvinceID()).setMoney(50000L);
+                        return;
+                    }
 
-if (CFG.FOG_OF_WAR == 2) {
-	for (int i = 0; i < CFG.game.getPlayersSize(); ++i) {
-		CFG.game.getPlayer(i).addMetCivilization(true);
-	}
-}
+                    CFG.game.createScenarioAddCivilization(countryID, activeProvinceID, false, true, true);
 
-int tempPop = CFG.game.getProvince(CFG.game.getActiveProvinceID()).getPopulationData().getPopulation();
+                    if (CFG.FOG_OF_WAR == 2) {
+                        for (int i = 0; i < CFG.game.getPlayersSize(); ++i) {
+                            CFG.game.getPlayer(i).addMetCivilization(true);
+                        }
+                    }
 
-CFG.game.getProvince(CFG.game.getActiveProvinceID()).getPopulationData().clearData();
-CFG.game.getProvince(CFG.game.getActiveProvinceID()).getPopulationData().setPopulationOfCivID(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID(), tempPop);
-CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).setMoney(10000L);
-CFG.gameAction.updateCivsMovementPoints(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID());
-CFG.gameAction.updateCivsDiplomacyPoints(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID());
-CFG.gameAction.buildRank_Score(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID());
+                    int tempPop = CFG.game.getProvince(activeProvinceID).getPopulationData().getPopulation();
 
-CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).setNumOfUnits(CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).getNumOfUnits() - CFG.game.getProvince(CFG.game.getActiveProvinceID()).getArmy(0));
-CFG.game.getProvince(CFG.game.getActiveProvinceID()).updateArmy(7500);
-CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).setNumOfUnits(CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).getNumOfUnits() + 10000);
+                    CFG.game.getProvince(activeProvinceID).getPopulationData().clearData();
+                    CFG.game.getProvince(activeProvinceID).getPopulationData().setPopulationOfCivID(CFG.game.getProvince(activeProvinceID).getCivID(), tempPop);
 
-CFG.game.declareWar(prevCivID, CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID(), true);
+                    CFG.game.getCiv(CFG.game.getProvince(activeProvinceID).getCivID()).setMoney(100000L);
 
-int tActiveProvince = CFG.game.getActiveProvinceID();
-CFG.game.setActiveProvinceID(-1);
-CFG.game.setActiveProvinceID(tActiveProvince);
+                    CFG.gameAction.updateCivsMovementPoints(CFG.game.getProvince(activeProvinceID).getCivID());
 
-addMessage(String.format("%s (%s) is now revolting against %s!", CFG.game.getCiv(CFG.game.getProvince(tActiveProvince).getCivID()).getCivName(), CFG.ideologiesManager.getIdeology(CFG.game.getCiv(CFG.game.getProvince(tActiveProvince).getCivID()).getIdeologyID()).getName(), prevOwnerName));
-addMessage("");
-return;
-                	}
+                    CFG.gameAction.updateCivsDiplomacyPoints(CFG.game.getProvince(activeProvinceID).getCivID());
+
+                    CFG.gameAction.buildRank_Score(CFG.game.getProvince(activeProvinceID).getCivID());
+
+                    CFG.game.getCiv(CFG.game.getProvince(activeProvinceID).getCivID()).setNumOfUnits(CFG.game.getCiv(CFG.game.getProvince(activeProvinceID).getCivID()).getNumOfUnits() - CFG.game.getProvince(CFG.game.getActiveProvinceID()).getArmy(0));
+
+                    CFG.game.getProvince(activeProvinceID).updateArmy(15000);
+
+                    CFG.game.getCiv(CFG.game.getProvince(activeProvinceID).getCivID()).setNumOfUnits(CFG.game.getCiv(CFG.game.getProvince(activeProvinceID).getCivID()).getNumOfUnits() + 12500);
+
+                    CFG.game.declareWar(prevCivID, CFG.game.getProvince(activeProvinceID).getCivID(), true);
+
+                    int tActiveProvince = CFG.game.getActiveProvinceID();
+
+                    CFG.game.setActiveProvinceID(-1);
+                    CFG.game.setActiveProvinceID(tActiveProvince);
+
+                    String message = String.format("%s (%s) is now revolting against %s!", CFG.game.getCiv(CFG.game.getProvince(tActiveProvince).getCivID()).getCivName(), CFG.ideologiesManager.getIdeology(CFG.game.getCiv(CFG.game.getProvince(tActiveProvince).getCivID()).getIdeologyID()).getName(), prevOwnerName);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+
+                    return;
+                }
+
+                if (tempCommand[0].equals("intervene")) {
+                    if (CFG.game.getActiveProvinceID() <= 0) {
+                        addMessage("Pick a country (any province) that you want to help in war!");
+                        addMessage("");
+
+                        CFG.toast.setInView("Pick a country (any province) that you want to help in war!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int helpCountryID = CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID();
+                    int countryAgainst = Integer.parseInt(tempCommand[1]);
+
+                    int warID = CFG.game.getWarID(helpCountryID, countryAgainst);
+
+                    if (warID == -1) {
+                        addMessage("Country is not in war at least with selected country ID.");
+                        addMessage("");
+
+                        CFG.toast.setInView("Country is not in war at least with selected country ID.", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int playerID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    if(CFG.game.getCivRelation_OfCivB(playerID, helpCountryID) < 30.0f || CFG.game.getCivRelation_OfCivB(helpCountryID, playerID) < 30.0f) {
+                        addMessage("You should have at least 30 points of *mutual* relationship with country you want to help.");
+                        addMessage("");
+
+                        CFG.toast.setInView("You should have at least 30 points of *mutual* relationship with country you want to help.", CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+
+                        return;
+                    }
+
+                    CFG.game.joinWar(playerID, countryAgainst, warID);
+
+                    CFG.game.setMilitaryAccess(playerID, helpCountryID, 360);
+                    CFG.game.setMilitaryAccess(helpCountryID, playerID, 360);
+
+                    CFG.game.setCivNonAggressionPact(playerID, helpCountryID, 130);
+                    CFG.game.setCivNonAggressionPact(helpCountryID, playerID, 130);
+
+                    CFG.game.setCivRelation_OfCivB(helpCountryID, playerID, 99.9f);
+
+                    int tActiveProvince = CFG.game.getActiveProvinceID();
+
+                    CFG.game.setActiveProvinceID(-1);
+                    CFG.game.setActiveProvinceID(tActiveProvince);
+
+                    String message = String.format("Intervened into %s's war against %s!", CFG.game.getCiv(helpCountryID).getCivName(), CFG.game.getCiv(countryAgainst).getCivName());
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+
+                    return;
+                }
+
+                if(tempCommand[0].equals("switchplayer")) {
+                    if (CFG.game.getActiveProvinceID() <= 0 || CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID() <= 0 || CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).getControlledByPlayer()) {
+                        addMessage("Pick a valid country (any country's province) that you want to switch to!");
+                        addMessage("");
+
+                        CFG.toast.setInView("Pick a valid country (any country's province) that you want to switch to!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    String from = CFG.game.getCiv(CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID()).getCivName();
+                    String to = CFG.game.getCiv(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID()).getCivName();
+
+                    CFG.game.addPlayer(CFG.game.getProvince(CFG.game.getActiveProvinceID()).getCivID());
+
+                    CFG.gameAction.buildFogOfWar(CFG.game.getPlayersSize() - 1);
+
+                    if (CFG.FOG_OF_WAR == 2) {
+                        CFG.game.getPlayer(CFG.game.getPlayersSize() - 1).buildMetProvincesAndCivs();
+                    }
+
+                    CFG.game.getPlayer(CFG.game.getPlayersSize() - 1).loadPlayersFlag();
+
+                    try {
+                        java.lang.reflect.Field playersField = CFG.game.getClass().getDeclaredField("lPlayers");
+
+                        playersField.setAccessible(true);
+
+                        List<Player> players = (List<Player>) playersField.get(CFG.game);
+
+                        Player currentPlayer = players.get(CFG.PLAYER_TURNID);
+
+                        players.set(CFG.PLAYER_TURNID, players.get(players.size() - 1));
+                        players.set(players.size() - 1, currentPlayer);
+
+                        CFG.game.removePlayer(players.size() - 1);
+
+                        CFG.PLAYER_TURNID = CFG.PLAYER_TURNID;
+
+                        CFG.menuManager.updateInGame_TOP_All(CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID());
+
+                        int tActiveProvince = CFG.game.getActiveProvinceID();
+
+                        CFG.game.setActiveProvinceID(-1);
+                        CFG.game.setActiveProvinceID(tActiveProvince);
+                    } catch(java.lang.NoSuchFieldException | java.lang.IllegalAccessException r) {
+                        addMessage("Reflection error.");
+                        addMessage("");
+
+                        return;
+                    }
+
+                    String message = String.format("Switched from %s to %s!", from, to);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_NEUTRAL);
+
+                    return;
+                }
 
                 if (!tempCommand[0].equals("reloadprovince")) break block118;
                 try {
