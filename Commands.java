@@ -989,6 +989,403 @@ class Commands {
                     return;
                 }
 
+                if (tempCommand[0].equalsIgnoreCase("RPAutoBuild") || tempCommand[0].equalsIgnoreCase("rpab")) {
+                    if(CFG.SPECTATOR_MODE) { addMessage("You are in spectator mode."); addMessage(""); return; }
+
+                    String building = tempCommand[1].toLowerCase();
+
+                    final int moneyAllocated = Integer.parseInt(tempCommand[2]);
+
+                    int money = Integer.parseInt(tempCommand[2]);
+
+                    boolean excluding;
+
+                    java.util.Set<Integer> exclude = aeProcExclusion(tempCommand[3]);
+
+                    if(exclude == null) {
+                        return;
+                    } else if(exclude.size() == 0) {
+                        excluding = false;
+                    } else {
+                        excluding = true;
+                    }
+
+                    int playerCivID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    Civilization playerCiv = CFG.game.getCiv(playerCivID);
+
+                    int totalBuilt = 0, buildingsSkipped = 0, moneyLeft = 0;
+
+                    if (moneyAllocated > playerCiv.getMoney()) {
+                        addMessage("You have allocated more money than you have!");
+                        addMessage("");
+
+                        CFG.toast.setInView("You have allocated more money than you have!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int movePoints = playerCiv.getMovePoints();
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() - moneyAllocated);
+                    playerCiv.setMovePoints(0);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    CFG.soundsManager.playSound(SoundsManager.SOUND_WORKSHOP);
+
+                    for(int p=0; p < playerCiv.getNumOfProvinces(); ++p) {
+                        if(money <= 0) break;
+
+                        int pID = playerCiv.getProvinceID(p);
+
+                        if(excluding && exclude.contains(pID)) {
+                            buildingsSkipped++; continue;
+                        }
+
+                        Province countryProv = CFG.game.getProvince(pID);
+
+                        int buildCost = aeCalcBCost(building, aeGetBLevel(building, countryProv) + 1, pID);
+
+                        if ( (money - buildCost) <= 0 ) {
+                            addMessage("Auto-Builder: Not enough money!");
+
+                            buildingsSkipped += (playerCiv.getNumOfProvinces() - totalBuilt) - exclude.size();
+
+                            break;
+                        }
+
+                        if(!aeBuildAvailable(building, playerCiv, countryProv)) { buildingsSkipped += 1; continue; }
+
+                        aeConstruct(building, playerCiv, countryProv);
+
+                        money -= buildCost; totalBuilt += 1;
+                    }
+
+                    CFG.gameAction.updateInGame_ProvinceInfo();
+
+                    if(money > 0) moneyLeft = money;
+
+                    if(totalBuilt == 0) playerCiv.setMovePoints(movePoints);
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() + moneyLeft);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    String message = String.format(
+                        "%s Building; Spent: %d; Skipped: %d; Built: %d (out of possible %d); Money Left: %d",
+                        building.substring(0,1).toUpperCase() + building.substring(1).toLowerCase(),
+                        moneyAllocated - money, buildingsSkipped, totalBuilt, playerCiv.getNumOfProvinces() - exclude.size(), moneyLeft);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_POSITIVE);
+
+                    return;
+                }
+
+                if (tempCommand[0].equalsIgnoreCase("RPAutoFestival") || tempCommand[0].equalsIgnoreCase("rpaf")) {
+                    if(CFG.SPECTATOR_MODE) { addMessage("You are in spectator mode."); addMessage(""); return; }
+
+                    final int moneyAllocated = Integer.parseInt(tempCommand[1]);
+
+                    int money = Integer.parseInt(tempCommand[1]);
+
+                    boolean excluding;
+
+                    java.util.Set<Integer> exclude = aeProcExclusion(tempCommand[2]);
+
+                    if(exclude == null) {
+                        return;
+                    } else if(exclude.size() == 0) {
+                        excluding = false;
+                    } else {
+                        excluding = true;
+                    }
+
+                    int playerCivID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    Civilization playerCiv = CFG.game.getCiv(playerCivID);
+
+                    int festivalsAreHeld = 0, festivalsSkipped = 0, moneyLeft = 0;
+
+                    if (moneyAllocated > playerCiv.getMoney()) {
+                        addMessage("You have allocated more money than you have!");
+                        addMessage("");
+
+                        CFG.toast.setInView("You have allocated more money than you have!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int movePoints = playerCiv.getMovePoints();
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() - moneyAllocated);
+                    playerCiv.setMovePoints(0);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    CFG.soundsManager.playSound(SoundsManager.SOUND_ASSIMILATE);
+
+                    for(int p=0; p < playerCiv.getNumOfProvinces(); ++p) {
+                        if(money <= 0) break;
+
+                        int pID = playerCiv.getProvinceID(p);
+
+                        if(excluding && exclude.contains(pID)) {
+                            festivalsSkipped++; continue;
+                        }
+
+                        Province countryProv = CFG.game.getProvince(pID);
+
+                        int festivalCost = DiplomacyManager.festivalCost(pID) * 2; // For ignoring game's movement points system
+
+                        if ( (money - festivalCost) <= 0 ) {
+                            addMessage("Auto-Festival: Not enough money!");
+
+                            festivalsSkipped += (playerCiv.getNumOfProvinces() - festivalsAreHeld) - exclude.size();
+
+                            break;
+                        }
+
+                        if(countryProv.getHappiness() == 1.0f) {
+                            festivalsSkipped++; continue;
+                        }
+
+                        if(playerCiv.addFestival(new CivFestival(pID, 10))) {
+                            festivalsAreHeld++;
+
+                            money -= festivalCost;
+                        } else {
+                            festivalsSkipped++;
+                        }
+                    }
+
+                    CFG.gameAction.updateInGame_ProvinceInfo();
+
+                    if(money > 0) moneyLeft = money;
+
+                    if(festivalsAreHeld == 0) playerCiv.setMovePoints(movePoints);
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() + moneyLeft);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    String message = String.format(
+                        "Festival; Spent: %d; Skipped: %d; Festivals Are Held: %d (out of possible %d); Money Left: %d",
+                        moneyAllocated - money, festivalsSkipped, festivalsAreHeld, playerCiv.getNumOfProvinces() - exclude.size(), moneyLeft);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_POSITIVE);
+
+                    return;
+                }
+
+                if (tempCommand[0].equalsIgnoreCase("RPAutoDevelop") || tempCommand[0].equalsIgnoreCase("rpad")) {
+                    if(CFG.SPECTATOR_MODE) { addMessage("You are in spectator mode."); addMessage(""); return; }
+
+                    final int moneyAllocated = Integer.parseInt(tempCommand[1]);
+
+                    int money = Integer.parseInt(tempCommand[1]);
+
+                    boolean excluding;
+
+                    java.util.Set<Integer> exclude = aeProcExclusion(tempCommand[2]);
+
+                    if(exclude == null) {
+                        return;
+                    } else if(exclude.size() == 0) {
+                        excluding = false;
+                    } else {
+                        excluding = true;
+                    }
+
+                    int playerCivID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    Civilization playerCiv = CFG.game.getCiv(playerCivID);
+
+                    int developed = 0, skipped = 0, moneyLeft = 0;
+
+                    if (moneyAllocated > playerCiv.getMoney()) {
+                        addMessage("You have allocated more money than you have!");
+                        addMessage("");
+
+                        CFG.toast.setInView("You have allocated more money than you have!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int moneyPerProvince = (int) moneyAllocated / (playerCiv.getNumOfProvinces() - exclude.size());
+
+                    int movePoints = playerCiv.getMovePoints();
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() - moneyAllocated);
+                    playerCiv.setMovePoints(0);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    CFG.soundsManager.playSound(SoundsManager.SOUND_LIBRARY);
+
+                    for(int p=0; p < playerCiv.getNumOfProvinces(); ++p) {
+                        if(money <= 0) break;
+
+                        int pID = playerCiv.getProvinceID(p);
+
+                        if(excluding && exclude.contains(pID)) {
+                            skipped++; continue;
+                        }
+
+                        Province countryProv = CFG.game.getProvince(pID);
+
+                        if(countryProv.getDevelopmentLevel() == playerCiv.getTechnologyLevel()) {
+                            skipped++; continue;
+                        }
+
+                        float ecoPoints = DiplomacyManager.invest_DevelopmentByGold(pID, moneyPerProvince),
+                              ecoPointsPerTurn = Math.max(ecoPoints / 8.0f, 1.0E-5f);
+
+                        if(CFG.game.getCiv(playerCiv.getCivID()).addInvest_Development(new CivInvest_Development(pID, 8, ecoPoints, ecoPointsPerTurn))) {
+                            developed++;
+
+                            money -= moneyPerProvince;
+                        } else {
+                            skipped++;
+                        }
+                    }
+
+                    CFG.gameAction.updateInGame_ProvinceInfo();
+
+                    if(money > 0) moneyLeft = money;
+
+                    if(developed == 0) playerCiv.setMovePoints(movePoints);
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() + moneyLeft);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    String message = String.format(
+                        "Development; Per Province: %d; Spent: %d; Skipped: %d; Developed: %d (out of possible %d); Money Left: %d",
+                        moneyPerProvince, moneyAllocated - money, skipped, developed, playerCiv.getNumOfProvinces() - exclude.size(), moneyLeft);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_POSITIVE);
+
+                    return;
+                }
+
+                if (tempCommand[0].equalsIgnoreCase("RPAutoDE") || tempCommand[0].equalsIgnoreCase("rpade")) {
+                    if(CFG.SPECTATOR_MODE) { addMessage("You are in spectator mode."); addMessage(""); return; }
+
+                    int eFilter = Integer.parseInt(tempCommand[1]);
+
+                    final int moneyAllocated = Integer.parseInt(tempCommand[2]);
+
+                    int money = Integer.parseInt(tempCommand[2]);
+
+                    boolean excluding;
+
+                    java.util.Set<Integer> exclude = aeProcExclusion(tempCommand[3]);
+
+                    if(exclude == null) {
+                        return;
+                    } else if(exclude.size() == 0) {
+                        excluding = false;
+                    } else {
+                        excluding = true;
+                    }
+
+                    int playerCivID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    Civilization playerCiv = CFG.game.getCiv(playerCivID);
+
+                    int eDeveloped = 0, skipped = 0, moneyLeft = 0;
+
+                    if (moneyAllocated > playerCiv.getMoney()) {
+                        addMessage("You have allocated more money than you have!");
+                        addMessage("");
+
+                        CFG.toast.setInView("You have allocated more money than you have!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int moneyPerProvince = (int) moneyAllocated / (playerCiv.getNumOfProvinces() - exclude.size());
+
+                    int movePoints = playerCiv.getMovePoints();
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() - moneyAllocated);
+                    playerCiv.setMovePoints(0);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    CFG.soundsManager.playSound(SoundsManager.SOUND_LIBRARY);
+
+                    for(int p=0; p < playerCiv.getNumOfProvinces(); ++p) {
+                        if(money <= 0) break;
+
+                        int pID = playerCiv.getProvinceID(p);
+
+                        if(excluding && exclude.contains(pID)) {
+                            skipped++; continue;
+                        }
+
+                        Province countryProv = CFG.game.getProvince(pID);
+
+                        if(eFilter != 0 && countryProv.getEconomy() >= eFilter) {
+                            skipped++; continue;
+                        }
+
+                        int ecoPoints = DiplomacyManager.invest_EconomyByGold(pID, moneyPerProvince),
+                            ecoPointsPerTurn = Math.max(ecoPoints / 6, 1);
+
+                        if(CFG.game.getCiv(playerCiv.getCivID()).addInvest(new CivInvest(pID, 10, ecoPoints, ecoPointsPerTurn))) {
+                            eDeveloped++;
+
+                            money -= moneyPerProvince;
+                        } else {
+                            skipped++;
+                        }
+                    }
+
+                    CFG.gameAction.updateInGame_ProvinceInfo();
+
+                    if(money > 0) moneyLeft = money;
+
+                    if(eDeveloped == 0) playerCiv.setMovePoints(movePoints);
+
+                    playerCiv.setMoney((long) playerCiv.getMoney() + moneyLeft);
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    String message = String.format(
+                        "Economy; Per Province: %d; Spent: %d; Skipped: %d; Developed: %d (out of possible %d); Money Left: %d",
+                        moneyPerProvince, moneyAllocated - money, skipped, eDeveloped, playerCiv.getNumOfProvinces() - exclude.size(), moneyLeft);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_POSITIVE);
+
+                    return;
+                }
+
+                if (tempCommand[0].equalsIgnoreCase("pid")) {
+                    int activeProvinceID = CFG.game.getActiveProvinceID();
+
+                    if (activeProvinceID >= 0 && !CFG.game.getProvince(activeProvinceID).getSeaProvince() && CFG.game.getProvince(activeProvinceID).getWasteland() < 0) {
+                        Province activeProvince = CFG.game.getProvince(activeProvinceID);
+
+                        addMessage(String.format("%s, %s: %s", CFG.game.getCiv(activeProvince.getCivID()).getCivName(), activeProvince.getName(), activeProvinceID));
+                        addMessage("");
+                    } else {
+                        addMessage("Choose a valid province!");
+                        addMessage("");
+
+                        CFG.toast.setInView("Choose a valid province!", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    return;
+                }
+
                 if (!tempCommand[0].equals("reloadprovince")) break block118;
                 try {
                     int tempID = Integer.parseInt(tempCommand[1]);
@@ -1022,6 +1419,139 @@ class Commands {
         Commands.IllegalCommand();
     }
 
+    //#region Automatization Expansion
+    private static final java.util.Set<Integer> aeProcExclusion(String exclusionParam) {
+        java.util.Set<Integer> exclude = new java.util.HashSet<>();
+
+
+        if(exclusionParam.equalsIgnoreCase("none") || exclusionParam.equals("0")) {
+            return exclude;
+        } else {
+            String[] parts = exclusionParam.split(",");
+
+            for (String part : parts) {
+                try {
+                    exclude.add(Integer.parseInt(part));
+                } catch (NumberFormatException nfe) {
+                    addMessage(String.format("Invalid province ID for excluding: %s", part));
+                    addMessage("");
+
+                    CFG.toast.setInView(String.format("Invalid province ID for excluding: %s", part), CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                    return null;
+                }
+            }
+
+            return exclude;
+        }
+    }
+
+    private static final boolean aeBuildAvailable(String type, Civilization pCiv, Province cProv) {
+    	float buildingTechLevel;
+    	int buildingMaxLevel;
+
+    	switch(type){
+    		case "fortress": { buildingTechLevel=BuildingsManager.getFort_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		case "tower": { buildingTechLevel=BuildingsManager.getTower_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		case "farm": { buildingTechLevel=BuildingsManager.getFarm_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		case "workshop": { buildingTechLevel=BuildingsManager.getWorkshop_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		case "library": { buildingTechLevel=BuildingsManager.getLibrary_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		case "armoury": { buildingTechLevel=BuildingsManager.getArmoury_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		case "supply": { buildingTechLevel=BuildingsManager.getSupply_TechLevel(aeGetBLevel(type, cProv) + 1); break; }
+    		default: { buildingTechLevel = 0; break; }
+    	}
+
+    	switch(type){
+    		case "fortress": { buildingMaxLevel=BuildingsManager.getFort_MaxLevel(); break; }
+    		case "tower": { buildingMaxLevel=BuildingsManager.getTower_MaxLevel(); break; }
+    		case "farm": { buildingMaxLevel=BuildingsManager.getFarm_MaxLevel(); break; }
+    		case "workshop": { buildingMaxLevel=BuildingsManager.getWorkshop_MaxLevel(); break; }
+    		case "library": { buildingMaxLevel=BuildingsManager.getLibrary_MaxLevel(); break; }
+    		case "armoury": { buildingMaxLevel=BuildingsManager.getArmoury_MaxLevel(); break; }
+    		case "supply": { buildingMaxLevel=BuildingsManager.getSupply_MaxLevel(); break; }
+    		default: { buildingMaxLevel = 0; break; }
+    	}
+
+		return aeGetBLevel(type, cProv) < buildingMaxLevel && pCiv.getTechnologyLevel() >= buildingTechLevel;
+    }
+
+    private static final int aeCalcBCost(String type, int level, int pID) {
+    	int cost;
+
+    	switch(type){
+    		case "fortress": { cost=BuildingsManager.getFort_BuildCost(level, pID); break; }
+    		case "tower": { cost=BuildingsManager.getTower_BuildCost(level, pID); break; }
+    		case "farm": { cost=BuildingsManager.getFarm_BuildCost(level, pID); break; }
+    		case "workshop": { cost=BuildingsManager.getWorkshop_BuildCost(level, pID); break; }
+    		case "library": { cost=BuildingsManager.getLibrary_BuildCost(level, pID); break; }
+    		case "armoury": { cost=BuildingsManager.getArmoury_BuildCost(level, pID); break; }
+    		case "supply": { cost=BuildingsManager.getSupply_BuildCost(level, pID); break; }
+    		default: { cost = 0; break; }
+    	}
+
+		return (int) Math.round(cost * 1.15); // 15% fee for ignoring game's movement points
+    }
+
+    private static final int aeGetBLevel(String type, Province cProv) {
+    	int level;
+
+    	switch(type){
+    		case "fortress": { level=cProv.getLevelOfFort(); break; }
+    		case "tower": { level=cProv.getLevelOfWatchTower(); break; }
+    		case "farm": { level=cProv.getLevelOfFarm(); break; }
+    		case "workshop": { level=cProv.getLevelOfWorkshop(); break; }
+    		case "library": { level=cProv.getLevelOfLibrary(); break; }
+    		case "armoury": { level=cProv.getLevelOfArmoury(); break; }
+    		case "supply": { level=cProv.getLevelOfSupply(); break; }
+    		default: { level = -1; break; }
+    	}
+
+    	return level;
+    }
+
+	private static final void aeConstruct(String type, Civilization pCiv, Province cProv) {
+		switch(type) {
+			case "fortress": {
+                pCiv.addNewConstruction(new Construction_GameData_Fort(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+			case "tower": {
+                pCiv.addNewConstruction(new Construction_GameData_Tower(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+			case "farm": {
+                pCiv.addNewConstruction(new Construction_GameData_Farm(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+			case "workshop": {
+                pCiv.addNewConstruction(new Construction_GameData_Workshop(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+			case "library": {
+                pCiv.addNewConstruction(new Construction_GameData_Library(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+			case "armoury": {
+                pCiv.addNewConstruction(new Construction_GameData_Armoury(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+			case "supply": {
+                pCiv.addNewConstruction(new Construction_GameData_Supply(cProv.getProvinceID(), aeGetBLevel(type, cProv) + 1));
+                break;
+			}
+		}
+	}
+    //#endregion
+
+    // private static final int calcMaxLoan(int civID) {
+    //     Civilization civ = CFG.game.getCiv(civID);
+
+    //     return (int) Math.min(9_999_999, Math.max(1000,
+    //         ((civ.iIncomeTaxation + civ.iIncomeProduction) * 80f
+    //         + Math.pow(civ.countEconomy(), 0.55) * (0.5f + civ.getTechnologyLevel() * 1.5))
+    //     ))
+    // }
+
     private static final String cheatMess() {
         return "[" + CFG.langManager.get("Cheat") + "] ";
     }
@@ -1032,4 +1562,3 @@ class Commands {
         Commands.addMessage("");
     }
 }
-
