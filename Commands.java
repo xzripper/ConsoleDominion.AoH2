@@ -904,8 +904,8 @@ class Commands {
 
                     CFG.game.joinWar(playerID, countryAgainst, warID);
 
-                    CFG.game.setMilitaryAccess(playerID, helpCountryID, 625);
-                    CFG.game.setMilitaryAccess(helpCountryID, playerID, 625);
+                    CFG.game.setMilitaryAccess(playerID, helpCountryID, 360);
+                    CFG.game.setMilitaryAccess(helpCountryID, playerID, 360);
 
                     CFG.game.setCivNonAggressionPact(playerID, helpCountryID, 130);
                     CFG.game.setCivNonAggressionPact(helpCountryID, playerID, 130);
@@ -1240,7 +1240,7 @@ class Commands {
                         }
 
                         float ecoPoints = DiplomacyManager.invest_DevelopmentByGold(pID, moneyPerProvince),
-                              ecoPointsPerTurn = Math.max(ecoPoints / 8.0f, 1.0E-5f);
+                              ecoPointsPerTurn = Math.max(ecoPoints / 7.0f, 1.0E-5f);
 
                         if(CFG.game.getCiv(playerCiv.getCivID()).addInvest_Development(new CivInvest_Development(pID, 8, ecoPoints, ecoPointsPerTurn))) {
                             developed++;
@@ -1334,7 +1334,7 @@ class Commands {
                         }
 
                         int ecoPoints = DiplomacyManager.invest_EconomyByGold(pID, moneyPerProvince),
-                            ecoPointsPerTurn = Math.max(ecoPoints / 4, 1);
+                            ecoPointsPerTurn = Math.max(ecoPoints / 5, 1);
 
                         if(CFG.game.getCiv(playerCiv.getCivID()).addInvest(new CivInvest(pID, 10, ecoPoints, ecoPointsPerTurn))) {
                             eDeveloped++;
