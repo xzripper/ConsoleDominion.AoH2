@@ -904,8 +904,8 @@ class Commands {
 
                     CFG.game.joinWar(playerID, countryAgainst, warID);
 
-                    CFG.game.setMilitaryAccess(playerID, helpCountryID, 360);
-                    CFG.game.setMilitaryAccess(helpCountryID, playerID, 360);
+                    CFG.game.setMilitaryAccess(playerID, helpCountryID, 625);
+                    CFG.game.setMilitaryAccess(helpCountryID, playerID, 625);
 
                     CFG.game.setCivNonAggressionPact(playerID, helpCountryID, 130);
                     CFG.game.setCivNonAggressionPact(helpCountryID, playerID, 130);
@@ -1334,7 +1334,7 @@ class Commands {
                         }
 
                         int ecoPoints = DiplomacyManager.invest_EconomyByGold(pID, moneyPerProvince),
-                            ecoPointsPerTurn = Math.max(ecoPoints / 6, 1);
+                            ecoPointsPerTurn = Math.max(ecoPoints / 4, 1);
 
                         if(CFG.game.getCiv(playerCiv.getCivID()).addInvest(new CivInvest(pID, 10, ecoPoints, ecoPointsPerTurn))) {
                             eDeveloped++;
@@ -1357,6 +1357,103 @@ class Commands {
                     String message = String.format(
                         "Economy; Per Province: %d; Spent: %d; Skipped: %d; Developed: %d (out of possible %d); Money Left: %d",
                         moneyPerProvince, moneyAllocated - money, skipped, eDeveloped, playerCiv.getNumOfProvinces() - exclude.size(), moneyLeft);
+
+                    addMessage(message);
+                    addMessage("");
+
+                    CFG.toast.setInView(message, CFG.COLOR_TEXT_MODIFIER_POSITIVE);
+
+                    return;
+                }
+
+                if (tempCommand[0].equalsIgnoreCase("RPLoanInfo") || tempCommand[0].equalsIgnoreCase("rpli")) {
+                    if(CFG.SPECTATOR_MODE) { addMessage("You are in spectator mode."); addMessage(""); return; }
+
+                    int playerCivID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    if(tempCommand.length >= 3) {
+                        int gold = Integer.parseInt(tempCommand[1]);
+                        int tenure = Integer.parseInt(tempCommand[2]);
+
+                        if(gold < 10000 || gold > leMaxLoan(playerCivID)) {
+                            addMessage("Loan Info: You can't take this amount Gold; type RPLoanInfo to get acceptable gold amount per loan.");
+                            addMessage("");
+
+                            return;
+                        }
+
+                        if(tenure < 5 || tenure > 625) {
+                            addMessage("Loan Info: Tenure is out of bounds; type RPLoanInfo to get acceptable tenure per loan.");
+                            addMessage("");
+
+                            return;
+                        }
+
+                        int interest = leInterest(playerCivID, gold, tenure);
+
+                        addMessage("Type RPLoanInfo for generic loan information.");
+                        addMessage(String.format(
+                            "This loan (%d Gold) has %d%s interest (%d Gold) with %d tenure; Gold per turn: %d.",
+                            gold, interest, "%", (gold * interest) / 100, tenure, Math.max(1, (gold + ((gold * interest) / 100)) / tenure)));
+                        addMessage("");
+
+                        return;
+                    }
+
+                    // Weird order
+                    addMessage("Type RPLoanInfo [GOLD] [TENURE] for specific loan information.");
+                    addMessage(String.format("Maximal loans limit for this country: %d.", leMaxLoans(playerCivID)));
+                    addMessage(String.format(
+                        "Minimal interest per minimal gold and tenure: %d%s, Maximal interest per maximal gold and tenure: %d%s.",
+                        leInterest(playerCivID, 10000, 5), "%", leInterest(playerCivID, leMaxLoan(playerCivID), 625), "%"));
+                    addMessage("Minimal tenure: 5 turns/5 months, Maximal tenure: 625 turns/30 years.");
+                    addMessage(String.format("Minimal gold per loan: 10.000, Maximal gold per loan: %d.", leMaxLoan(playerCivID)));
+                    addMessage("");
+
+                    return;
+                }
+
+                if (tempCommand[0].equalsIgnoreCase("RPLoan") || tempCommand[0].equalsIgnoreCase("rpl")) {
+                    if(CFG.SPECTATOR_MODE) { addMessage("You are in spectator mode."); addMessage(""); return; }
+
+                    int playerCivID = CFG.game.getPlayer(CFG.PLAYER_TURNID).getCivID();
+
+                    Civilization playerCiv = CFG.game.getCiv(playerCivID);
+
+                    int gold = Integer.parseInt(tempCommand[1]);
+                    int tenure = Integer.parseInt(tempCommand[2]);
+
+                    if(gold <= 0 || gold > leMaxLoan(playerCivID) || tenure < 5 || tenure > 625) {
+                        addMessage("Bank: Fill in the correct amount Gold and tenure! Type RPLoanInfo to get loan information.");
+                        addMessage("");
+
+                        CFG.toast.setInView("Bank: Fill in the correct amount Gold and tenure! Type RPLoanInfo to get loan information.", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    if(playerCiv.getLoansSize() >= leMaxLoans(playerCivID)) {
+                        addMessage("Bank: Refused; Too many loans for the country.");
+                        addMessage("");
+
+                        CFG.toast.setInView("Bank: Refused; Too many loans for the country.", CFG.COLOR_TEXT_MODIFIER_NEGATIVE2);
+
+                        return;
+                    }
+
+                    int interestPercent = leInterest(playerCivID, gold, tenure);
+
+                    int goldPerTurn = Math.max(1, (gold + ((gold * interestPercent) / 100)) / tenure);
+
+                    playerCiv.setMoney(playerCiv.getMoney() + (long) gold);
+                    playerCiv.addLoan(goldPerTurn, tenure);
+                    playerCiv.setMovePoints(playerCiv.getMovePoints() - 4);
+
+                    CFG.menuManager.updateInGame_TOP_All(playerCivID);
+
+                    String message = String.format(
+                        "Bank: Approved; %d Gold handed out with %d%s interest over %d months; Repayment per turn: %d Gold.",
+                        gold, interestPercent, "%", tenure, goldPerTurn);
 
                     addMessage(message);
                     addMessage("");
@@ -1543,14 +1640,45 @@ class Commands {
 	}
     //#endregion
 
-    // private static final int calcMaxLoan(int civID) {
-    //     Civilization civ = CFG.game.getCiv(civID);
+    //#region Loan Expansion
+    private static final int leMaxLoan(int civID) {
+        Civilization civ = CFG.game.getCiv(civID);
 
-    //     return (int) Math.min(9_999_999, Math.max(1000,
-    //         ((civ.iIncomeTaxation + civ.iIncomeProduction) * 80f
-    //         + Math.pow(civ.countEconomy(), 0.55) * (0.5f + civ.getTechnologyLevel() * 1.5))
-    //     ))
-    // }
+        return (int) Math.min(9_999_999, Math.max(1000,
+            ((civ.iIncomeTaxation + civ.iIncomeProduction) * 80f
+            + Math.pow(civ.countEconomy(), 0.55) * (0.5f + civ.getTechnologyLevel() * 1.5))
+        ));
+    }
+
+    private static final int leInterest(int civID, int gold, int tenure) {
+        Civilization civ = CFG.game.getCiv(civID);
+
+        float cWealth = (civ.iIncomeTaxation + civ.iIncomeProduction) * 0.5f
+                        + civ.countEconomy() * 0.5f
+                        + civ.getTechnologyLevel() * 50f;
+
+        float annualRate = Math.max(0.02f, 0.08f - Math.min(0.06f, cWealth / 200000f));
+
+        return (int) Math.min(600, Math.round((Math.pow(1 + (annualRate / 12f), tenure) - 1) * 100) + 1);
+    }
+
+    private static final int leMaxLoans(int civID) {
+        Civilization civ = CFG.game.getCiv(civID);
+
+        float cWealth = (civ.iIncomeTaxation + civ.iIncomeProduction)
+                        + civ.countEconomy() * 0.5f
+                        + civ.getTechnologyLevel() * 50f;
+
+        int[] thresholds = {25_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 600_000, 700_000, 800_000};
+        int[] loans =      {5, 10, 15, 20, 25, 30, 35, 40, 45, 50};
+
+        for (int tI = thresholds.length - 1; tI >= 0; tI--) {
+            if (cWealth >= thresholds[tI]) return loans[tI];
+        }
+
+        return 3;
+    }
+    //#endregion
 
     private static final String cheatMess() {
         return "[" + CFG.langManager.get("Cheat") + "] ";
