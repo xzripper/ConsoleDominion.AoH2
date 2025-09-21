@@ -34,13 +34,16 @@ Age of History 2 light modification that extends existing console commands, allo
 - `pid` - Shows info about the active province.  
   - Outputs: `[Country Name], [Province Name]: [Province ID]`  
   - Only works on valid land provinces; fails on sea or wasteland provinces.
+- `RPLoan [GOLD] [TENURE]` - Take a loan from the bank; GOLD is the amount you want, TENURE is the repayment period in turns. The gold is added immediately to your treasury, and repayment per turn is automatically calculated based on interest. Repay the loan in the game loans tab. Example: `RPLoan 150000 60`.
+- `RPLoanInfo` - Show generic loan information for your country, including maximum/minimum gold per loan, maximum/minimum tenure, and the minimal/maximal interest percentages.
+- `RPLoanInfo [GOLD] [TENURE]` - Show specific loan details for a requested GOLD amount and TENURE. Displays the interest in percent, total interest in gold, and repayment per turn. Example: `RPLoanInfo 150000 60`.
 - More coming in future!
 
 Make sure to visit the Steam Page for illustrations and more information!
 
 ### Installation:
 - Download <a href="https://www.7-zip.org/">7-Zip</a> (if you don't have it yet).
-- Download the <a href="https://github.com/xzripper/ConsoleDominion.AoH2/releases/tag/v1.2.0-steam">modification</a>.
+- Download the <a href="https://github.com/xzripper/ConsoleDominion.AoH2/releases/tag/v1.3.0-steam">modification</a>.
 - Go to Steam -> Library -> Age of History 2 -> Manage (Icon) -> Manage -> Browse local files.
 - Create a copy of AoC2.exe (CTRL+C, CTRL+V) (Optional).
 - AoC2.exe -> Right Click -> 7-Zip -> Open Archive -> Go to `age\of\civilizations2\jakowski\lukasz\` directory.
@@ -51,4 +54,4 @@ Notes: This is my first modification for this game! Also, most likely this modif
 
 <hr>
 
-That's it! V1.2.0 (Steam Page was Hidden).
+That's it! V1.3.0 (Steam Page was Hidden).
