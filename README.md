@@ -43,7 +43,7 @@ Make sure to visit the Steam Page for illustrations and more information!
 
 ### Installation:
 - Download <a href="https://www.7-zip.org/">7-Zip</a> (if you don't have it yet).
-- Download the <a href="https://github.com/xzripper/ConsoleDominion.AoH2/releases/tag/v1.3.0-steam">modification</a>.
+- Download the <a href="https://github.com/xzripper/ConsoleDominion.AoH2/releases/tag/v1.3.0-nonsteam">modification</a>.
 - Go to Steam -> Library -> Age of History 2 -> Manage (Icon) -> Manage -> Browse local files.
 - Create a copy of AoC2.exe (CTRL+C, CTRL+V) (Optional).
 - AoC2.exe -> Right Click -> 7-Zip -> Open Archive -> Go to `age\of\civilizations2\jakowski\lukasz\` directory.
