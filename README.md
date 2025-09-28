@@ -2,7 +2,7 @@
 
 Age of History 2 light modification that extends existing console commands, allowing for more interesting gameplay possibilities/filling gaps in game's unimplemented functionalities!
 
-### New commands:
+# New commands:
 - `setowner [COUNTRY_ID/"me"]` - Set province's owner; click on the province before running the command.
 - `addmoney [NUMBER]` - Adds gold to the treasury; click on the province (country) before running the command.
 - `ideology [IDEOLOGY]` - Changes country ideology; click on the province (country) before running the command.
