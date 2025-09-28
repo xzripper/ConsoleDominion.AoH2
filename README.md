@@ -1,4 +1,4 @@
-<h1 align="center"><img src="ConsoleDominion.jpg" width="250"><br>AoH2: Console Dominion (<del><b><a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3563307293">Steam Page</a></b></del>)</h1>
+<h1 align="center"><img src="ConsoleDominion.jpg" width="250"><br>AoH2: Console Dominion (<b><a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3563307293">Steam Page</a></b>)</h1>
 
 Age of History 2 light modification that extends existing console commands, allowing for more interesting gameplay possibilities/filling gaps in game's unimplemented functionalities!
 
@@ -54,4 +54,4 @@ Notes: This is my first modification for this game! Also, most likely this modif
 
 <hr>
 
-That's it! V1.3.0 (Steam Page was Hidden).
+That's it! V1.3.1
